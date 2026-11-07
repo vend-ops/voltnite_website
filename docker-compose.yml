@@ -1,0 +1,25 @@
+services:
+  voltnite-website:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: voltnite-website:latest
+    container_name: voltnite-website
+    restart: unless-stopped
+    ports:
+      # Map host port (default: 3005) to container port 3000
+      # Change 3005 if your VPS uses this port for another service
+      - "${VOLTNITE_PORT:-3005}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      # Optional contact form webhook configuration
+      # - CONTACT_WEBHOOK_URL=${CONTACT_WEBHOOK_URL:-}
+      # - CONTACT_WEBHOOK_TOKEN=${CONTACT_WEBHOOK_TOKEN:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
