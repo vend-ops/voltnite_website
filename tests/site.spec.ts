@@ -72,18 +72,19 @@ test("project routes, canonical metadata, sitemap and missing pages resolve", as
   expect((await request.get("/projects/does-not-exist")).status()).toBe(404);
 });
 
-test("contact validation preserves the enquiry and never claims unconfigured delivery", async ({ page, request }) => {
+test("contact validation preserves the enquiry and provides email redirection to info@voltnite.com", async ({ page, request }) => {
   await page.goto("/contact");
-  await page.getByRole("button", { name: "Validate enquiry" }).click();
+  await page.getByRole("button", { name: "Send enquiry" }).click();
   await expect(page.getByText("Enter a valid email address.")).toBeVisible();
   await expect(page.getByLabel("Name", { exact: true })).toBeFocused();
   await page.getByLabel("Name", { exact: true }).fill("Sam Example");
   await page.getByLabel("Email", { exact: true }).fill("sam@example.com");
   await page.getByLabel("Project Details").fill("We need help developing a connected IoT payment controller.");
-  await page.getByRole("button", { name: "Validate enquiry" }).click();
-  await expect(page.getByRole("status")).toContainText("has not been sent");
-  await expect(page.getByRole("button", { name: "Copy enquiry" })).toBeVisible();
-  await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Sam Example");
+  await page.getByRole("button", { name: "Send enquiry" }).click();
+  await expect(page.getByText("info@voltnite.com")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open Default Email/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open in Gmail/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Copy enquiry/i })).toBeVisible();
   expect((await request.post("/api/contact", { data: { name: "a", email: "bad", details: "short" } })).status()).toBe(400);
   expect((await request.post("/api/contact", { data: "malformed", headers: { "Content-Type": "application/json" } })).status()).toBe(400);
   expect((await request.post("/api/contact", { data: {}, headers: { Origin: "https://untrusted.example" } })).status()).toBe(403);
